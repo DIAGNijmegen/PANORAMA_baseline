@@ -20,11 +20,23 @@ nnUNetv2_train -d Dataset103_PANORAMA_baseline_Pancreas_Segmentation 4 3d_fullre
 ```
 
 ### High-resolution PDAC detection model
-As a preprocessing steps, all images in the training set were cropped according to the pancreas segmentation (ground truth label = 4), using the custom [CropPancreasROI](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/data_utils.py#L53) function. A margin of 100cm x 50cm x 15cm was set according to [previous research](https://pubmed.ncbi.nlm.nih.gov/35053538/) and the anatomical postion of the pancreas [2]. The CE loss was used for training, as this loss is more suitable than Dice for detection tasks [2]. During training network weights were saved every 50 epochs to perform optimal epoch selection. This required a minor alteration to the nnU-Net source code which can be found in [this fork](https://github.com/DIAGNijmegen/nnUNetv2_checkpoints) of the original repository. To install the nnU-Net with this alteration you need to clone the forked repostiory and install the package in editable mode:
+As a preprocessing steps, all images in the training set were cropped according to the pancreas segmentation (ground truth label = 4), using the custom [CropPancreasROI](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/data_utils.py#L53) function. A margin of 100cm x 50cm x 15cm was set according to [previous research](https://pubmed.ncbi.nlm.nih.gov/35053538/) and the anatomical postion of the pancreas [2]. The CE loss was used for training, as this loss is more suitable than Dice for detection tasks [2]. During training network weights were saved every 50 epochs to perform optimal epoch selection. This required a minor alteration to the nnU-Net source code which can be found in [this fork](https://github.com/DIAGNijmegen/nnUNetv2_checkpoints) of the original repository. To install the nnU-Net with this alteration you need to clone the forked repostiory and install the package in editable mode. Furthermore, the [customTrainerCEcheckpoints.py](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/customTrainerCEcheckpoints.py) file must be coppied into the nnunetv2/training/nnUNetTrainer/ folder
 ```
 git clone https://github.com/DIAGNijmegen/nnUNetv2_checkpoints.git
+cp /path/to/PANORAMA_baseline/src/customTrainerCEcheckpoints.py nnUnet/nnunetv2/training/nnUNetTrainer/customTrainerCEcheckpoints.py
 cd nnUNet
 pip install -e .
+```
+
+After correctly formatting the dataset according to [nnU-Net framework](https://github.com/MIC-DKFZ/nnUNet) (v2) instructions and correctly setting all environment variables, example commands for training are:
+
+```
+nnUNetv2_plan_and_preprocess -d Dataset104_PANORAMA_baseline_PDAC_Detection --verify_dataset_integrity
+nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 0 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
+nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 1 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
+nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 2 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
+nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 3 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
+nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 4 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
 ```
 
 
