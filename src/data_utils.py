@@ -103,6 +103,8 @@ def CropPancreasROI(image, low_res_segmentation, margins):
 
 def GetFullSizDetectionMap(cropped_prediction, cropp_coordinates, full_image):
     prediction_np = cropped_prediction['probabilities'][1]
+    prediction_np = prediction_np.astype(np.float32)
+
 
     lesion_candidates, confidences, indexed_pred = extract_lesion_candidates(prediction_np)
     print(confidences)
