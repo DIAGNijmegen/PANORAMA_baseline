@@ -5,6 +5,8 @@ FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04 AS base
 
 # Ensures that Python output to stdout/stderr is not buffered: prevents missing information when terminating
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONWARNINGS="ignore"
+
 
 RUN apt-get update && \
   apt-get install -y software-properties-common && \

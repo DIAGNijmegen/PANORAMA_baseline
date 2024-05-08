@@ -31,6 +31,9 @@ import json
 # imports required for my algorithm
 from data_utils import resample_img, CropPancreasROI, GetFullSizDetectionMap
 
+import warnings
+warnings.filterwarnings("ignore")
+
 class PDACDetectionContainer(SegmentationAlgorithm):
     def __init__(self):
         super().__init__(
