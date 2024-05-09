@@ -9,7 +9,7 @@ The algorithm is based on the [nnU-Net framework](https://github.com/MIC-DKFZ/nn
 
 ## Model training
 Training was performed according to the [nnU-Net framework](https://github.com/MIC-DKFZ/nnUNet) (v2) instructions.
-Both nnU-Net algorithms were trained using 5-fold cross-validation. The data split per fold can be found here:
+Both nnU-Net algorithms were trained using 5-fold cross-validation. The data split per fold can be found here: [pancreas_segmentation_folds](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/Dataset103_PANORAMA_baseline_Pancreas_Segmentation_folds.json), [PDAC_detection_folds](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/Dataset104_PANORAMA_baseline_PDAC_Detection_folds.json).
 
 ### Low-resolution pancreas segmentation model
 As a preprocessing step, all images were resampled to (4.5, 4.5, 9.0) spacing, which corresponds to 6x the original median spacing of the training set. This was done using the custom [resample_img](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/data_utils.py#L21) function.
@@ -44,6 +44,27 @@ nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 3 -tr nnUNetTraine
 nnUNetv2_train -d Dataset104_PANORAMA_baseline_PDAC_Detection 4 -tr nnUNetTrainer_Loss_CE_checkpoints 3d_fullres --c --npz
 ```
 
+#### Best checkpoint selection
+By default, the nnU-Net uses the last checkpoint as the final model for each fold. Since we are applying nnU-Net to a detection task, we wrote a custom checkpoint selection method that considers the area under the receiver operating characteristic curve (AUROC) and the average precision (AP) as performance metrics, instead of the Dice score. All metrics were computed using the [picai_eval](https://github.com/DIAGNijmegen/picai_eval) framework.
+For each fold, all input validation images (after crop) were saved in fold_x/validation_images. After training a given checkpoint, inference was performed on the validation images using that checkpoint's weights with the following command (example for checkpoint 50, fold 0):
+```
+nnUNetv2_predict -i /path/to/nnUNet_v2/nnUNet_results/Dataset104_PANORAMA_baseline_PDAC_Detection/nnUNetTrainer_Loss_CE_checkpoints__nnUNetPlans__3d_fullres/fold_0/validation_images -o /path/to/nnUNet_v2/nnUNet_results/Dataset104_PANORAMA_baseline_PDAC_Detection/nnUNetTrainer_Loss_CE_checkpoints__nnUNetPlans__3d_fullres/fold_0/validation_check_50 -d 104 -tr nnUNetTrainer_Loss_CE_checkpoints -chk checkpoint_50.pth -f 0 -c 3d_fullres --save_probabilities
+```
+After inference is done, the performance metrics are computed for the predicted probability maps. This is done using the [picai_eval](https://github.com/DIAGNijmegen/picai_eval) framework in the following way:
+
+```
+from picai_eval import Metrics
+from picai_eval import evaluate_folder
+pm_dir = '/path/to/nnUNet_v2/nnUNet_results/Dataset104_PANORAMA_baseline_PDAC_Detection/nnUNetTrainer_Loss_CE_checkpoints__nnUNetPlans__3d_fullres/fold_0/validation_check_50'
+gt_dir = '/path/to/nnUNet_v2/nnUNet_raw/Dataset104_PANORAMA_baseline_PDAC_Detection/labelsTr'
+metrics = evaluate_folder(
+        y_det_dir=pm_dir,
+        y_true_dir=gt_dir,
+        y_true_postprocess_func=lambda lbl: (lbl == 1).astype(int), #considers only the tumor label (1) in the ground truth segmentation
+        y_det_postprocess_func=lambda pred: extract_lesion_candidates(pred)[0], #extracts candidate lesions from the input probability map
+        pred_extensions = ['.npz'])
+metrics.save('/path/to/nnUNet_v2/nnUNet_results/Dataset104_PANORAMA_baseline_PDAC_Detection/nnUNetTrainer_Loss_CE_checkpoints__nnUNetPlans__3d_fullres/fold_0/metrics_check_50.json')
+```
 
 ### References:
 1. Isensee F, Jaeger PF, Kohl SAA, Petersen J, Maier-Hein KH. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2021 Feb;18(2):203-211. doi: 10.1038/s41592-020-01008-z. Epub 2020 Dec 7. PMID: 33288961.
