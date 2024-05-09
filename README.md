@@ -66,6 +66,14 @@ metrics = evaluate_folder(
 metrics.save('/path/to/nnUNet_v2/nnUNet_results/Dataset104_PANORAMA_baseline_PDAC_Detection/nnUNetTrainer_Loss_CE_checkpoints__nnUNetPlans__3d_fullres/fold_0/metrics_check_50.json')
 ```
 
+After all metrics have been saved to the respective json files, the checkpoint selection can be performed using the provided [notebook](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/checkpoint_selection/Select_Best_Checkpoint_Training.ipynb). The results for the checkpoint selection in this baseline are provided in this [image](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/checkpoint_selection/checkpoint_selection_baseline.png).
+
+#### Final algorithm detection map
+The final detection map is obtained by ensambling the best checkpoints for each fold. The nnU-Net output probability map is then converted to a detection map using the [GetFullSizDetectionMap](https://github.com/DIAGNijmegen/PANORAMA_baseline/blob/main/src/data_utils.py#L104) function that applies the extract_lesion_candidates method from [report_guided_annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) [3]. For more information about the lesion extraction process refer to the documentation in the original repository.
+
+
+
 ### References:
 1. Isensee F, Jaeger PF, Kohl SAA, Petersen J, Maier-Hein KH. nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation. Nat Methods. 2021 Feb;18(2):203-211. doi: 10.1038/s41592-020-01008-z. Epub 2020 Dec 7. PMID: 33288961.
 2. Alves N, Schuurmans M, Litjens G, Bosma JS, Hermans J, Huisman H. Fully Automatic Deep Learning Framework for Pancreatic Ductal Adenocarcinoma Detection on Computed Tomography. Cancers (Basel). 2022 Jan 13;14(2):376. doi: 10.3390/cancers14020376. PMID: 35053538; PMCID: PMC8774174.
+3. Bosma, J. S., Saha, A., Hosseinzadeh, M., Slootweg, I., de Rooij, M., & Huisman, H. (2023). Semi-supervised Learning with Report-guided Pseudo Labels for Deep Learning-based Prostate Cancer Detection Using Biparametric MRI. Radiology: Artificial Intelligence, doi:10.1148/ryai.230031..
