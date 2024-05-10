@@ -45,6 +45,7 @@ class PDACDetectionContainer(SegmentationAlgorithm):
             ),
         )
         # input / output paths for nnUNet
+
         self.nnunet_input_dir_lowres = Path("/opt/algorithm/nnunet/input_lowres") 
         self.nnunet_input_dir_fullres = Path("/opt/algorithm/nnunet/input_fullres")
         self.nnunet_output_dir_lowres = Path("/opt/algorithm/nnunet/output_lowres")
@@ -145,7 +146,8 @@ class PDACDetectionContainer(SegmentationAlgorithm):
                 '-i', str(input_dir),
                 '-o', str(output_dir),
                 '-c', configuration,
-                '-tr', trainer
+                '-tr', trainer,
+                '--disable_progress_bar'
             ]
 
             if folds:
