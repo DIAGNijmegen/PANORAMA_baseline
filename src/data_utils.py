@@ -105,22 +105,23 @@ def GetFullSizDetectionMap(cropped_prediction, cropp_coordinates, full_image):
     prediction_np = cropped_prediction['probabilities'][1]
     prediction_np = prediction_np.astype(np.float32)
 
-
     lesion_candidates, confidences, indexed_pred = extract_lesion_candidates(prediction_np)
-    print(confidences)
+
 
     patient_level_prediction = float(np.max(lesion_candidates))
-    print(patient_level_prediction)
 
 
     full_size_detection_map = np.zeros(sitk.GetArrayFromImage(full_image).shape)
-   
+    full_size_detection_map = full_size_detection_map.astype(np.float32)
+
+
     # Use integer slicing, ensuring no slice is empty
     z_slice = slice(int(cropp_coordinates['z_start']), int(cropp_coordinates['z_finish']))
     y_slice = slice(int(cropp_coordinates['y_start']), int(cropp_coordinates['y_finish']))
     x_slice = slice(int(cropp_coordinates['x_start']), int(cropp_coordinates['x_finish']))
 
     full_size_detection_map[z_slice, y_slice, x_slice] = lesion_candidates
+    full_size_detection_map = full_size_detection_map.astype(np.float32)
 
     detection_map_image = sitk.GetImageFromArray(full_size_detection_map)
     detection_map_image.CopyInformation(full_image)

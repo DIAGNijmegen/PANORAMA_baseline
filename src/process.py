@@ -68,10 +68,6 @@ class PDACDetectionContainer(SegmentationAlgorithm):
         self.output_dir.mkdir(exist_ok=True, parents=True)
         self.output_dir_tlm.mkdir(exist_ok=True, parents=True)
 
-        # self.ct_image = ''
-        # for f in os.scandir(self.ct_ip_dir):
-        #     if ".mha" in f.name: 
-        #         self.ct_image = f.path
         mha_files = glob.glob(os.path.join(self.ct_ip_dir, '*.mha'))
         print(mha_files)
 
