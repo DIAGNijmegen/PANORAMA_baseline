@@ -17,6 +17,8 @@ import SimpleITK as sitk
 import time
 import os
 from report_guided_annotation import extract_lesion_candidates
+from scipy.ndimage import binary_dilation
+
 
 def resample_img(itk_image, out_spacing=[2.0, 2.0, 2.0], is_label=False, out_size = [], out_origin = [], out_direction= []):
     original_spacing = itk_image.GetSpacing()
@@ -100,11 +102,25 @@ def CropPancreasROI(image, low_res_segmentation, margins):
       
     return cropped_image, crop_coordinates
 
+def PostProcessing(cropped_prediction, pred_path_nifti):
+    pancreas_mask = sitk.ReadImage(pred_path_nifti)
+    pancreas_mask_np = sitk.GetArrayFromImage(pancreas_mask)
+    pancreas_mask_np[pancreas_mask_np==1] = 4
+    pancreas_mask_np[pancreas_mask_np==5] = 4
+    pancreas_mask_np[pancreas_mask_np!=4] = 0
+    pancreas_mask_np[pancreas_mask_np==4] = 1
 
-def GetFullSizDetectionMap(cropped_prediction, cropp_coordinates, full_image):
+    kernel = np.ones((5, 5, 5), dtype=bool)
+    dilated_pancreas_mask = binary_dilation(pancreas_mask_np, structure=kernel)
+
     prediction_np = cropped_prediction['probabilities'][1]
     prediction_np = prediction_np.astype(np.float32)
 
+    prediction_np[dilated_pancreas_mask!=1] = 0
+
+    return prediction_np
+
+def GetFullSizDetectionMap(prediction_np, cropp_coordinates, full_image):
     lesion_candidates, confidences, indexed_pred = extract_lesion_candidates(prediction_np)
 
 
@@ -125,7 +141,9 @@ def GetFullSizDetectionMap(cropped_prediction, cropp_coordinates, full_image):
 
     detection_map_image = sitk.GetImageFromArray(full_size_detection_map)
     detection_map_image.CopyInformation(full_image)
+
     return detection_map_image, patient_level_prediction
         
 
- 
+
+

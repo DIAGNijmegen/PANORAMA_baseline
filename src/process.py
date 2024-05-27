@@ -29,7 +29,7 @@ from subprocess import check_output, STDOUT, CalledProcessError
 from pathlib import Path
 import json
 # imports required for my algorithm
-from data_utils import resample_img, CropPancreasROI, GetFullSizDetectionMap
+from data_utils import resample_img, CropPancreasROI, GetFullSizDetectionMap, PostProcessing
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -49,14 +49,14 @@ class PDACDetectionContainer(SegmentationAlgorithm):
         self.nnunet_input_dir_lowres = Path("/opt/algorithm/nnunet/input_lowres") 
         self.nnunet_input_dir_fullres = Path("/opt/algorithm/nnunet/input_fullres")
         self.nnunet_output_dir_lowres = Path("/opt/algorithm/nnunet/output_lowres")
-        self.nnunet_output_dir_fullres = Path("/opt/algorithm/nnunet/output_fullwres")
+        self.nnunet_output_dir_fullres = Path("/opt/algorithm/nnunet/output_fullres")
         self.nnunet_model_dir = Path("/opt/algorithm/nnunet/results")
-        
+       
         # input / output paths
         self.ct_ip_dir         = Path("/input/images/venous-ct")
         self.output_dir        = Path("/output")
 
-        self.output_dir_images    = Path(os.path.join(self.output_dir,"images")) 
+        self.output_dir_images = Path(os.path.join(self.output_dir,"images")) 
         self.output_dir_tlm    = Path(os.path.join(self.output_dir_images,"pdac-detection-map")) 
         self.detection_map     = self.output_dir_tlm / "detection_map.mha"
 
@@ -115,11 +115,12 @@ class PDACDetectionContainer(SegmentationAlgorithm):
 
         pred_path_npz = str(self.nnunet_output_dir_fullres / "scan.npz")
         prediction = np.load(pred_path_npz)
+        pred_path_nifti = str(self.nnunet_output_dir_fullres / "scan.nii.gz")
 
-        detection_map, patient_level_prediction = GetFullSizDetectionMap(prediction, crop_coordinates, itk_img)
+        prediction_postprocessed = PostProcessing(prediction, pred_path_nifti)
+        detection_map, patient_level_prediction = GetFullSizDetectionMap(prediction_postprocessed, crop_coordinates, itk_img)
+        
         sitk.WriteImage(detection_map, self.detection_map)
-
-
         write_json_file(location=self.output_dir / "pdac-likelihood.json", content=patient_level_prediction)
 
 
@@ -143,7 +144,8 @@ class PDACDetectionContainer(SegmentationAlgorithm):
                 '-o', str(output_dir),
                 '-c', configuration,
                 '-tr', trainer,
-                '--disable_progress_bar'
+                '--disable_progress_bar',
+                '--continue_prediction'
             ]
 
             if folds:
