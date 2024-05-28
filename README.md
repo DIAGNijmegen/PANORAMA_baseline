@@ -3,6 +3,8 @@ This repository contains the baseline algorithm for the [PANORAMA challenge](htt
 
 The algorithm is based on the [nnU-Net framework](https://github.com/MIC-DKFZ/nnUNet) (v2) [1] and consists of a two-step approach for pancreatic ductal adenocarcinoma (PDAC) detection on contrast-enhanced CT scans (CECT). First, a low-resolution nnU-Net model with Dice loss is trained to segment the pancreas. Based on this automatic segmentation, a region of interest (ROI) around the pancreas region is cropped from the original input CECT. The cropped ROIs are used to train a high-resolution nnU-Net algorithm for PDAC detection using cross-entropy loss. This process is summarized in the figure.
 
+To build the image container you can use the test_run.sh script. Please note that in order to build the docker using Ubuntu in WLS you first need to enable integration with additional distros in docker desktop for windows (settings -> resources -> WSL integration).
+
 <img src="baseline_pipeline.png" alt="Pipeline of the baseline algorithm for the PANORAMA challenge" style="display: block; margin-bottom: 20px;">
 
 <p align="center">Figure 1: Pipeline of the baseline algorithm for the PANORAMA challenge.</p>
